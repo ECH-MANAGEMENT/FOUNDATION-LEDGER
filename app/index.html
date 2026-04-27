@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FoundationLedger — Dashboard</title>
+<style>
+:root {
+  --bg:#080808; --s1:#0f0f0f; --s2:#141414; --s3:#1a1a1a; --s4:#202020;
+  --border:#222; --border2:#2c2c2c;
+  --green:#00c853; --gdim:#081a08; --gmid:#0d2e0d; --gbright:#00e676;
+  --red:#ff5252; --rdim:#1f0808;
+  --blue:#2979ff; --bdim:#08122a; --btext:#82b1ff;
+  --gold:#f0b429; --goldim:#1f1400;
+  --text:#e0e0e0; --dim:#555; --mid:#888;
+  --purple:#d500f9;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;}
+
+/* ── AUTH SCREEN ── */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);}
+.auth-card{background:var(--s1);border:1px solid var(--border2);border-radius:12px;padding:40px;width:380px;text-align:center;}
+.auth-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:28px;}
+.auth-logo-icon{width:40px;height:40px;border-radius:8px;background:var(--green);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000;}
+.auth-logo-name{font-size:20px;font-weight:900;color:#fff;letter-spacing:.5px;}
+.auth-logo-name span{color:var(--green);}
+.auth-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.auth-sub{font-size:11px;color:var(--dim);margin-bottom:28px;}
+.auth-input{width:100%;background:var(--s3);border:1px solid var(--border2);border-radius:6px;padding:12px 14px;color:var(--text);font-size:13px;margin-bottom:12px;outline:none;transition:border .15s;}
+.auth-input:focus{border-color:var(--green);}
+.auth-btn{width:100%;background:var(--green);color:#000;border:none;border-radius:6px;padding:13px;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:.5px;transition:all .15s;margin-bottom:10px;}
+.auth-btn:hover{background:var(--gbright);}
+.auth-demo-btn{width:100%;background:transparent;color:var(--dim);border:1px solid var(--border2);border-radius:6px;padding:10px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .15s;}
+.auth-demo-btn:hover{color:var(--text);border-color:#444;}
+.auth-demo-badge{display:inline-block;background:var(--goldim);color:var(--gold);border:1px solid var(--gold);font-size:9px;font-weight:800;padding:2px 8px;border-radius:3px;letter-spacing:1px;margin-bottom:16px;}
+
+/* ── APP SHELL ── */
+#app{display:none;height:100vh;overflow:hidden;flex-direction:column;}
+.topbar{height:52px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;}
+.topbar-logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.tl-icon{width:26px;height:26px;border-radius:5px;background:var(--green);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;color:#000;}
+.tl-name{font-size:13px;font-weight:900;color:#fff;letter-spacing:.5px;}
+.tl-name span{color:var(--green);}
+.topbar-sep{width:1px;height:20px;background:var(--border2);}
+.topbar-account{font-size:11px;color:var(--dim);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.mode-badge{font-size:9px;font-weight:800;letter-spacing:1.5px;padding:3px 9px;border-radius:3px;text-transform:uppercase;}
+.mode-prod{background:var(--gmid);color:var(--green);border:1px solid rgba(0,200,83,.25);}
+.mode-demo{background:var(--goldim);color:var(--gold);border:1px solid rgba(240,180,41,.3);}
+.topbar-avatar{width:26px;height:26px;border-radius:50%;background:var(--gmid);border:1px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:var(--green);cursor:pointer;}
+.logout-btn{background:transparent;border:none;color:var(--dim);font-size:11px;cursor:pointer;padding:4px 8px;border-radius:4px;}
+.logout-btn:hover{color:var(--text);}
+
+/* ── LAYOUT ── */
+.app-body{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:200px;background:var(--s1);border-right:1px solid var(--border);flex-shrink:0;overflow-y:auto;padding:12px 0;}
+.nav-section{font-size:8px;font-weight:800;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:12px 16px 6px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;font-size:12px;font-weight:600;color:var(--dim);border-left:3px solid transparent;transition:all .1s;}
+.nav-item:hover{color:var(--text);background:var(--s2);}
+.nav-item.active{color:var(--green);background:var(--gdim);border-left-color:var(--green);}
+.nav-icon{font-size:14px;width:16px;text-align:center;}
+.main{flex:1;overflow-y:auto;padding:20px;}
+
+/* ── PANELS ── */
+.panel-title{font-size:18px;font-weight:900;color:#fff;margin-bottom:4px;}
+.panel-sub{font-size:11px;color:var(--dim);margin-bottom:20px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+.kpi{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi-green::before{background:var(--green);} .kpi-blue::before{background:var(--blue);}
+.kpi-gold::before{background:var(--gold);} .kpi-red::before{background:var(--red);}
+.kpi-label{font-size:8px;font-weight:800;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;}
+.kpi-value{font-size:20px;font-weight:900;line-height:1;}
+.kpi-green .kpi-value{color:var(--green);}
+.kpi-blue .kpi-value{color:var(--btext);}
+.kpi-gold .kpi-value{color:var(--gold);}
+.kpi-red .kpi-value{color:var(--red);}
+.kpi-delta{font-size:10px;color:var(--dim);margin-top:4px;}
+.kpi-delta.up{color:var(--green);}
+
+/* ── GRID ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+.grid-3{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px;}
+@media(max-width:800px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+.card{background:var(--s2);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase;}
+.card-action{font-size:10px;color:var(--green);cursor:pointer;font-weight:700;}
+.card-body{padding:14px;}
+
+/* ── ENTITY TABLE ── */
+.entity-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #111;cursor:pointer;transition:background .1s;}
+.entity-row:last-child{border-bottom:none;}
+.entity-row:hover{background:var(--s3);}
+.entity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.entity-name{flex:1;font-size:12px;font-weight:600;color:#fff;}
+.entity-type{font-size:10px;color:var(--dim);flex:1;}
+.entity-net{font-size:12px;font-weight:800;}
+.entity-net.pos{color:var(--green);}
+.entity-net.neg{color:var(--red);}
+.entity-rev{font-size:10px;color:var(--dim);}
+
+/* ── REPORTS LIST ── */
+.report-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #111;cursor:pointer;transition:background .1s;}
+.report-row:last-child{border-bottom:none;}
+.report-row:hover{background:var(--s3);}
+.report-icon{font-size:18px;flex-shrink:0;}
+.report-info{flex:1;}
+.report-name{font-size:12px;font-weight:600;color:#fff;}
+.report-meta{font-size:10px;color:var(--dim);}
+.report-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:2px;text-transform:uppercase;letter-spacing:.5px;}
+.badge-new{background:var(--gmid);color:var(--green);}
+.badge-ready{background:var(--bdim);color:var(--btext);}
+.report-dl{background:var(--s4);border:1px solid var(--border2);color:var(--dim);font-size:9px;font-weight:700;padding:4px 9px;border-radius:4px;cursor:pointer;border:none;transition:all .15s;}
+.report-dl:hover{background:var(--green);color:#000;}
+
+/* ── CAPITAL RULES ── */
+.rule-row{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #111;gap:12px;}
+.rule-row:last-child{border-bottom:none;}
+.rule-name{flex:1;font-size:11px;font-weight:600;color:var(--text);}
+.rule-val{font-size:12px;font-weight:800;color:#fff;}
+.rule-status{font-size:9px;font-weight:800;padding:2px 8px;border-radius:3px;letter-spacing:.5px;}
+.status-pass{background:var(--gmid);color:var(--green);}
+.status-warn{background:var(--goldim);color:var(--gold);}
+.status-breach{background:var(--rdim);color:var(--red);}
+
+/* ── CHART PLACEHOLDER ── */
+.bar-chart{padding:14px;display:flex;flex-direction:column;gap:7px;}
+.bar-row{display:flex;align-items:center;gap:8px;}
+.bar-label{font-size:10px;color:var(--dim);width:38px;text-align:right;flex-shrink:0;}
+.bar-track{flex:1;height:18px;background:var(--s4);border-radius:3px;overflow:hidden;position:relative;}
+.bar-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:8px;}
+.bar-val{font-size:10px;font-weight:700;color:#000;white-space:nowrap;}
+
+/* ── SETTINGS PAGE ── */
+.settings-section{margin-bottom:24px;}
+.settings-label{font-size:9px;font-weight:800;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #111;}
+.settings-row:last-child{border-bottom:none;}
+.settings-name{font-size:12px;font-weight:600;color:var(--text);}
+.settings-desc{font-size:10px;color:var(--dim);margin-top:2px;}
+.toggle{width:38px;height:20px;border-radius:10px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--green);}
+.toggle.off{background:var(--s4);}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;transition:left .2s;}
+.toggle.on::after{left:21px;}
+.toggle.off::after{left:3px;}
+.settings-btn{background:var(--s4);border:1px solid var(--border2);color:var(--dim);font-size:10px;font-weight:700;padding:6px 14px;border-radius:4px;cursor:pointer;transition:all .15s;}
+.settings-btn:hover{border-color:#444;color:var(--text);}
+.settings-btn.danger{border-color:rgba(255,82,82,.4);color:var(--red);}
+.settings-btn.danger:hover{background:var(--rdim);}
+
+/* ── PROGRESS ── */
+.mini-bar{height:4px;background:var(--s4);border-radius:2px;overflow:hidden;margin-top:6px;}
+.mini-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--green),#00bfa5);}
+
+/* ── PLAN BADGE ── */
+.plan-card{background:linear-gradient(135deg,var(--gmid),var(--s2));border:1px solid rgba(0,200,83,.25);border-radius:8px;padding:16px;margin-bottom:16px;}
+.plan-name{font-size:12px;font-weight:900;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.plan-detail{font-size:11px;color:var(--dim);}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH ══ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">FL</div>
+      <span class="auth-logo-name">Foundation<span>Ledger</span></span>
+    </div>
+    <div id="auth-mode-badge" class="auth-demo-badge" style="display:none">DEMO MODE</div>
+    <div class="auth-title" id="auth-title">Sign in to your account</div>
+    <div class="auth-sub" id="auth-sub">The Financial OS for Real Estate Investors</div>
+    <input class="auth-input" id="auth-email" type="email" placeholder="Email address" value="jerry.eads@echmanagement.services">
+    <input class="auth-input" id="auth-pass" type="password" placeholder="Password" value="••••••••">
+    <button class="auth-btn" onclick="login('production')">Sign In</button>
+    <button class="auth-demo-btn" onclick="login('demo')">👁 View Demo Account</button>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <a class="topbar-logo" href="#">
+      <div class="tl-icon">FL</div>
+      <span class="tl-name">Foundation<span>Ledger</span></span>
+    </a>
+    <div class="topbar-sep"></div>
+    <span class="topbar-account" id="tb-account">—</span>
+    <div class="topbar-right">
+      <span class="mode-badge" id="tb-mode-badge">PRODUCTION</span>
+      <div class="topbar-avatar" id="tb-avatar">JE</div>
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="showPanel('dashboard')" id="nav-dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="showPanel('entities')" id="nav-entities"><span class="nav-icon">🏢</span> Entities</div>
+      <div class="nav-item" onclick="showPanel('reports')" id="nav-reports"><span class="nav-icon">📄</span> Reports</div>
+      <div class="nav-section">Portfolio</div>
+      <div class="nav-item" onclick="showPanel('capital')" id="nav-capital"><span class="nav-icon">📐</span> Capital Rules</div>
+      <div class="nav-item" onclick="showPanel('settings')" id="nav-settings"><span class="nav-icon">⚙️</span> Settings</div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main" id="main-content">
+      <!-- injected by JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const ACCOUNTS = {
+  production: {
+    id: "ECH_0001",
+    name: "ECH Management Services LLC",
+    owner: "Jerry Eads",
+    plan: "Portfolio",
+    initials: "JE",
+    entities: [
+      { name:"ECH Management Services LLC", type:"Management Co",    color:"#00c853", rev:14200, exp:5800,  cash:42000  },
+      { name:"EADS Industries LLC",         type:"Asset Holding",    color:"#82b1ff", rev:18400, exp:6250,  cash:87500  },
+      { name:"ECH Developments & Holdings", type:"Asset Holding",    color:"#f0b429", rev:7800,  exp:3700,  cash:31200  },
+      { name:"JP Eads Company LLC",         type:"Construction",     color:"#e040fb", rev:22000, exp:18200, cash:18400  },
+      { name:"E&S Concrete Construction",   type:"Construction",     color:"#4dd0e1", rev:31500, exp:25300, cash:12800  },
+      { name:"EADS Tools & Equipment LLC",  type:"Equipment",        color:"#ff8a65", rev:1200,  exp:5300,  cash:8100   },
+    ],
+    portfolio: { income:95100, expenses:64550, net:30550, cash:200000, dscr:1.84, ltv:47.2, doors:47, occ:93.6 },
+    reports: [
+      { name:"Weekly Portfolio Summary",        date:"Apr 27, 2026", type:"WEEKLY",  badge:"new"   },
+      { name:"ECH Management Services — P&L",   date:"Apr 26, 2026", type:"P&L",     badge:"ready" },
+      { name:"EADS Industries — P&L",           date:"Apr 26, 2026", type:"P&L",     badge:"ready" },
+      { name:"JP Eads Company — P&L",           date:"Apr 26, 2026", type:"P&L",     badge:"ready" },
+      { name:"Consolidated Report — Apr 2026",  date:"Apr 25, 2026", type:"CONSOL",  badge:"ready" },
+    ]
+  },
+  demo: {
+    id: "DEMO_001",
+    name: "Sample Real Estate LLC",
+    owner: "Demo Investor",
+    plan: "Operator",
+    initials: "DI",
+    entities: [
+      { name:"Sample Management LLC",    type:"Management Co",    color:"#00c853", rev:8500,  exp:3200, cash:42000 },
+      { name:"Sample Holdings LLC",      type:"Asset Holding",    color:"#82b1ff", rev:14200, exp:6800, cash:87500 },
+      { name:"Sample Construction LLC",  type:"Construction",     color:"#f0b429", rev:22000, exp:18400,cash:31200 },
+    ],
+    portfolio: { income:44700, expenses:28400, net:16300, cash:160700, dscr:1.84, ltv:47.2, doors:12, occ:91.7 },
+    reports: [
+      { name:"Weekly Portfolio Summary",   date:"Apr 27, 2026", type:"WEEKLY", badge:"new"   },
+      { name:"Sample Management — P&L",    date:"Apr 26, 2026", type:"P&L",    badge:"ready" },
+      { name:"Sample Holdings — P&L",      date:"Apr 26, 2026", type:"P&L",    badge:"ready" },
+    ]
+  }
+};
+
+let mode = 'production';
+let account = ACCOUNTS.production;
+
+function money(n){ return n >= 0 ? `$${n.toLocaleString()}` : `-$${Math.abs(n).toLocaleString()}`; }
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function login(m) {
+  mode = m;
+  account = ACCOUNTS[m];
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('tb-account').textContent = account.name;
+  const mb = document.getElementById('tb-mode-badge');
+  mb.textContent = m === 'demo' ? 'DEMO MODE' : 'PRODUCTION';
+  mb.className = 'mode-badge ' + (m === 'demo' ? 'mode-demo' : 'mode-prod');
+  document.getElementById('tb-avatar').textContent = account.initials;
+  showPanel('dashboard');
+}
+function logout() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function showPanel(id) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + id).classList.add('active');
+  const main = document.getElementById('main-content');
+  if (id === 'dashboard') main.innerHTML = renderDashboard();
+  else if (id === 'entities') main.innerHTML = renderEntities();
+  else if (id === 'reports') main.innerHTML = renderReports();
+  else if (id === 'capital') main.innerHTML = renderCapital();
+  else if (id === 'settings') main.innerHTML = renderSettings();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const p = account.portfolio;
+  const margin = ((p.net / p.income) * 100).toFixed(1);
+  const demoBar = mode === 'demo' ? `<div style="background:#1f1400;border:1px solid rgba(240,180,41,.3);border-radius:6px;padding:8px 14px;margin-bottom:16px;font-size:10px;color:#f0b429;font-weight:700;">⚠  DEMO MODE — All figures are fictional. <span style="color:#888;font-weight:400">Switch to a real account to see live data.</span></div>` : '';
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  return `
+  ${demoBar}
+  <div class="panel-title">${greet}, ${account.owner.split(' ')[0]}.</div>
+  <div class="panel-sub">${account.name} · ${account.entities.length} entities · ${p.doors} doors · ${p.occ}% occupied</div>
+
+  <div class="kpi-grid">
+    <div class="kpi kpi-green">
+      <div class="kpi-label">Portfolio Net Income</div>
+      <div class="kpi-value">${money(p.net)}</div>
+      <div class="kpi-delta up">↑ ${margin}% margin this month</div>
+    </div>
+    <div class="kpi kpi-blue">
+      <div class="kpi-label">Total Cash Position</div>
+      <div class="kpi-value">${money(p.cash)}</div>
+      <div class="kpi-delta ${p.cash >= 500000 ? 'up' : ''}">${p.cash >= 500000 ? '✓ Above $500K reserve floor' : '⚠ Below $500K reserve floor'}</div>
+    </div>
+    <div class="kpi kpi-gold">
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value">${money(p.income)}</div>
+      <div class="kpi-delta">${account.entities.length} entities · this month</div>
+    </div>
+    <div class="kpi kpi-red">
+      <div class="kpi-label">Total Expenses</div>
+      <div class="kpi-value">${money(p.expenses)}</div>
+      <div class="kpi-delta">${((p.expenses/p.income)*100).toFixed(1)}% of revenue</div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Entity Performance — This Month</span>
+        <span class="card-action" onclick="showPanel('entities')">View All →</span>
+      </div>
+      ${account.entities.map(e => {
+        const net = e.rev - e.exp;
+        return `<div class="entity-row">
+          <div class="entity-dot" style="background:${e.color}"></div>
+          <div style="flex:1;min-width:0">
+            <div class="entity-name">${e.name}</div>
+            <div class="entity-type">${e.type}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="entity-net ${net >= 0 ? 'pos' : 'neg'}">${money(net)}</div>
+            <div class="entity-rev">${money(e.rev)} rev</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Capital Rules</span></div>
+        <div class="rule-row">
+          <span class="rule-name">DSCR</span>
+          <span class="rule-val">${p.dscr}x</span>
+          <span class="rule-status ${p.dscr >= 1.8 ? 'status-pass' : 'status-breach'}">${p.dscr >= 1.8 ? '✓ PASS' : '✗ BREACH'}</span>
+        </div>
+        <div class="rule-row">
+          <span class="rule-name">LTV</span>
+          <span class="rule-val">${p.ltv}%</span>
+          <span class="rule-status ${p.ltv <= 50 ? 'status-pass' : 'status-warn'}">${p.ltv <= 50 ? '✓ PASS' : '⚠ WATCH'}</span>
+        </div>
+        <div class="rule-row">
+          <span class="rule-name">Liquidity</span>
+          <span class="rule-val">${money(p.cash)}</span>
+          <span class="rule-status ${p.cash >= 500000 ? 'status-pass' : 'status-warn'}">${p.cash >= 500000 ? '✓ OK' : '⚠ LOW'}</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Latest Reports</span><span class="card-action" onclick="showPanel('reports')">All →</span></div>
+        ${account.reports.slice(0,3).map(r => `
+        <div class="report-row">
+          <span class="report-icon">📄</span>
+          <div class="report-info"><div class="report-name">${r.name}</div><div class="report-meta">${r.date}</div></div>
+          <span class="report-badge badge-${r.badge}">${r.badge.toUpperCase()}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Monthly Income by Entity</span></div>
+    <div class="bar-chart">
+      ${account.entities.map(e => {
+        const maxRev = Math.max(...account.entities.map(x => x.rev));
+        const pct = Math.round((e.rev / maxRev) * 100);
+        return `<div class="bar-row">
+          <span class="bar-label" style="font-size:9px;width:80px;color:var(--dim);text-align:right;overflow:hidden;white-space:nowrap;">${e.name.split(' ')[0]}</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${pct}%;background:${e.color};">
+              <span class="bar-val" style="color:#000;font-size:9px;">${money(e.rev)}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+// ── ENTITIES ──────────────────────────────────────────────────────────────────
+function renderEntities() {
+  return `
+  <div class="panel-title">Entities</div>
+  <div class="panel-sub">${account.entities.length} entities · ${account.name}</div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Entity Overview — April 2026</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:var(--s3);">
+            <th style="text-align:left;padding:10px 16px;font-size:8px;letter-spacing:1.5px;color:var(--dim);font-weight:800;text-transform:uppercase;">Entity</th>
+            <th style="text-align:left;padding:10px;font-size:8px;letter-spacing:1.5px;color:var(--dim);font-weight:800;text-transform:uppercase;">Type</th>
+            <th style="text-align:right;padding:10px;font-size:8px;letter-spacing:1.5px;color:var(--dim);font-weight:800;text-transform:uppercase;">Revenue</th>
+            <th style="text-align:right;padding:10px;font-size:8px;letter-spacing:1.5px;color:var(--dim);font-weight:800;text-transform:uppercase;">Expenses</th>
+            <th style="text-align:right;padding:10px;font-size:8px;letter-spacing:1.5px;color:var(--dim);font-weight:800;text-transform:uppercase;">Net Income</th>
+            <th style="text-align:right;padding:10px 16px;font-size:8px;letter-spacing:1.5px;color:var(--dim);font-weight:800;text-transform:uppercase;">Cash Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${account.entities.map((e,i) => {
+            const net = e.rev - e.exp;
+            return `<tr style="background:${i%2===0?'var(--s2)':'var(--bg)'};border-bottom:1px solid #111;">
+              <td style="padding:11px 16px;font-size:12px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:8px;height:8px;border-radius:50%;background:${e.color};flex-shrink:0;"></div>
+                  <span style="font-weight:600;color:#fff;">${e.name}</span>
+                </div>
+              </td>
+              <td style="padding:11px 10px;font-size:11px;color:var(--dim);">${e.type}</td>
+              <td style="padding:11px 10px;font-size:12px;font-weight:700;color:var(--green);text-align:right;">${money(e.rev)}</td>
+              <td style="padding:11px 10px;font-size:12px;font-weight:700;color:var(--red);text-align:right;">${money(e.exp)}</td>
+              <td style="padding:11px 10px;font-size:12px;font-weight:800;color:${net>=0?'var(--green)':'var(--red)'};text-align:right;">${money(net)}</td>
+              <td style="padding:11px 16px;font-size:12px;font-weight:700;color:var(--btext);text-align:right;">${money(e.cash)}</td>
+            </tr>`;
+          }).join('')}
+          <tr style="background:var(--gmid);border-top:1px solid rgba(0,200,83,.2);">
+            <td colspan="2" style="padding:12px 16px;font-size:11px;font-weight:800;color:var(--green);">PORTFOLIO TOTAL</td>
+            <td style="padding:12px 10px;font-size:12px;font-weight:800;color:var(--green);text-align:right;">${money(account.portfolio.income)}</td>
+            <td style="padding:12px 10px;font-size:12px;font-weight:800;color:var(--red);text-align:right;">${money(account.portfolio.expenses)}</td>
+            <td style="padding:12px 10px;font-size:13px;font-weight:900;color:var(--green);text-align:right;">${money(account.portfolio.net)}</td>
+            <td style="padding:12px 16px;font-size:12px;font-weight:800;color:var(--btext);text-align:right;">${money(account.portfolio.cash)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ── REPORTS ───────────────────────────────────────────────────────────────────
+function renderReports() {
+  return `
+  <div class="panel-title">Reports</div>
+  <div class="panel-sub">Auto-generated every Friday at 1:00 PM · FoundationLedger Report Engine v1.0</div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Available Reports</span>
+      <span style="font-size:9px;color:var(--green);font-weight:700;">Next auto-run: Friday 1:00 PM</span>
+    </div>
+    ${account.reports.map(r => `
+    <div class="report-row">
+      <span class="report-icon">${r.type==='WEEKLY'?'📊':r.type==='CONSOL'?'🗂️':'📄'}</span>
+      <div class="report-info">
+        <div class="report-name">${r.name}</div>
+        <div class="report-meta">Generated ${r.date} · FoundationLedger branded PDF</div>
+      </div>
+      <span class="report-badge badge-${r.badge}">${r.badge.toUpperCase()}</span>
+      <button class="report-dl" onclick="alert('In Phase 1 web app: reports download directly from here.\\n\\nFor now: Desktop → FINANCIAL_REPORTS → FL_2026-04')">⬇ Download</button>
+    </div>`).join('')}
+  </div>
+  <div style="background:var(--gmid);border:1px solid rgba(0,200,83,.2);border-radius:8px;padding:14px 16px;margin-top:14px;">
+    <div style="font-size:10px;font-weight:800;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">⚡ Automated Report Schedule</div>
+    <div style="font-size:11px;color:var(--dim);line-height:1.8;">
+      • Every Friday 1:00 PM — P&L, Cash Flow, Balance Sheet, Consolidated, Weekly Summary<br>
+      • Ashley drops bank exports Monday morning → TARS processes → reports in inbox by Friday<br>
+      • Production mode: real ECH data · Demo mode: fictional data for prospects
+    </div>
+  </div>`;
+}
+
+// ── CAPITAL RULES ─────────────────────────────────────────────────────────────
+function renderCapital() {
+  const p = account.portfolio;
+  return `
+  <div class="panel-title">Capital Rules</div>
+  <div class="panel-sub">Hardwired non-negotiable thresholds · Flags immediately on breach</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Current Status</span></div>
+      <div class="rule-row"><span class="rule-name">Average DSCR</span><span class="rule-val">${p.dscr}x</span><span class="rule-status ${p.dscr>=1.8?'status-pass':'status-breach'}">${p.dscr>=1.8?'✓ PASS':'✗ BREACH'}</span></div>
+      <div class="rule-row"><span class="rule-name">Portfolio LTV</span><span class="rule-val">${p.ltv}%</span><span class="rule-status ${p.ltv<=50?'status-pass':'status-warn'}">${p.ltv<=50?'✓ PASS':'⚠ WATCH'}</span></div>
+      <div class="rule-row"><span class="rule-name">Liquidity Reserve</span><span class="rule-val">${money(p.cash)}</span><span class="rule-status ${p.cash>=500000?'status-pass':'status-warn'}">${p.cash>=500000?'✓ OK':'⚠ LOW'}</span></div>
+      <div class="rule-row"><span class="rule-name">Primary Bank</span><span class="rule-val" style="font-size:11px;">Altra Bank</span><span class="rule-status status-pass">✓ CONFIRMED</span></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Hardwired Thresholds</span></div>
+      <div class="rule-row"><span class="rule-name">DSCR Floor</span><span style="font-size:11px;color:var(--dim);">Never approve below</span><span class="rule-val">≥ 1.80x</span></div>
+      <div class="rule-row"><span class="rule-name">LTV Ceiling</span><span style="font-size:11px;color:var(--dim);">Portfolio level max</span><span class="rule-val">≤ 50%</span></div>
+      <div class="rule-row"><span class="rule-name">Liquidity Min</span><span style="font-size:11px;color:var(--dim);">Always maintained</span><span class="rule-val">$500K</span></div>
+      <div class="rule-row"><span class="rule-name">Portfolio Target</span><span style="font-size:11px;color:var(--dim);">Unit count goal</span><span class="rule-val">200+ doors</span></div>
+    </div>
+  </div>`;
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function renderSettings() {
+  const planColor = mode === 'demo' ? 'var(--gold)' : 'var(--green)';
+  return `
+  <div class="panel-title">Settings</div>
+  <div class="panel-sub">${account.name} · Account ${account.id}</div>
+
+  <div class="plan-card">
+    <div class="plan-name">${account.plan} Plan${mode==='demo'?' · DEMO MODE':''}</div>
+    <div class="plan-detail">Account ID: ${account.id} · Owner: ${account.owner}</div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-label">Report Configuration</div>
+    <div class="settings-row">
+      <div><div class="settings-name">Auto-run Friday reports</div><div class="settings-desc">Generates all reports every Friday at 1:00 PM automatically</div></div>
+      <div class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-name">Email reports to owner</div><div class="settings-desc">Send PDF reports to ${account.owner} after each auto-run</div></div>
+      <div class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-name">FoundationLedger branding</div><div class="settings-desc">Show FL logo and branding on all report headers</div></div>
+      <div class="toggle on"></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-label">Data Mode</div>
+    <div class="settings-row">
+      <div><div class="settings-name">Current mode: <strong style="color:${planColor}">${mode === 'demo' ? 'DEMO' : 'PRODUCTION'}</strong></div>
+      <div class="settings-desc">${mode==='demo'?'Showing fictional data — safe for prospect presentations':'Showing real ECH Management financial data — CONFIDENTIAL'}</div></div>
+      <button class="settings-btn" onclick="logout()">Switch Mode</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-label">Account</div>
+    <div class="settings-row">
+      <div><div class="settings-name">Chart of Accounts</div><div class="settings-desc">Edit transaction categories and keywords</div></div>
+      <button class="settings-btn">Edit →</button>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-name">Entity Management</div><div class="settings-desc">Add, remove, or rename entities</div></div>
+      <button class="settings-btn">Manage →</button>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-name">Export All Data</div><div class="settings-desc">Download all reports and transaction data</div></div>
+      <button class="settings-btn">Export</button>
+    </div>
+  </div>`;
+}
+</script>
+</body>
+</html>
