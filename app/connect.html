@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FoundationLedger — Connect Your Banks</title>
+<style>
+:root{--bg:#080808;--s1:#0f0f0f;--s2:#141414;--s3:#1a1a1a;--border:#222;--border2:#2c2c2c;--green:#00c853;--gdim:#081a08;--gmid:#0d2e0d;--gbright:#00e676;--red:#ff5252;--rdim:#1f0808;--blue:#2979ff;--btext:#82b1ff;--gold:#f0b429;--goldim:#1f1400;--text:#e0e0e0;--dim:#555;--mid:#888;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;}
+.topbar{height:52px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:10px;}
+.tl-icon{width:26px;height:26px;border-radius:5px;background:var(--green);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;color:#000;}
+.tl-name{font-size:13px;font-weight:900;color:#fff;}
+.tl-name span{color:var(--green);}
+.back-btn{margin-left:auto;background:transparent;border:1px solid var(--border2);color:var(--dim);font-size:11px;font-weight:700;padding:5px 12px;border-radius:4px;cursor:pointer;text-decoration:none;}
+.back-btn:hover{color:var(--text);}
+
+.page{max-width:860px;margin:0 auto;padding:32px 24px;}
+.page-title{font-size:22px;font-weight:900;color:#fff;margin-bottom:6px;}
+.page-sub{font-size:12px;color:var(--dim);margin-bottom:32px;}
+
+.security-bar{background:var(--gdim);border:1px solid rgba(0,200,83,.2);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+.security-icon{font-size:16px;}
+.security-text{font-size:11px;color:var(--text);line-height:1.6;}
+.security-text strong{color:var(--green);}
+
+.entities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px;margin-bottom:32px;}
+.entity-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:20px;}
+.entity-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.entity-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.entity-name{font-size:13px;font-weight:700;color:#fff;flex:1;}
+.entity-type{font-size:10px;color:var(--dim);}
+.connect-status{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 12px;background:var(--s3);border-radius:6px;}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.status-dot.connected{background:var(--green);}
+.status-dot.pending{background:var(--gold);}
+.status-dot.not-connected{background:var(--dim);}
+.status-text{font-size:11px;flex:1;}
+.status-text.connected{color:var(--green);}
+.status-text.pending{color:var(--gold);}
+.status-text.not-connected{color:var(--dim);}
+.connect-btn{width:100%;padding:10px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;letter-spacing:.5px;border:none;transition:all .15s;}
+.connect-btn.active{background:var(--green);color:#000;}
+.connect-btn.active:hover{background:var(--gbright);}
+.connect-btn.connected{background:var(--gdim);color:var(--green);border:1px solid rgba(0,200,83,.3);cursor:default;}
+.connect-btn.reconnect{background:transparent;color:var(--dim);border:1px solid var(--border2);}
+.connect-btn.reconnect:hover{color:var(--text);border-color:#444;}
+
+.how-it-works{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:28px;}
+.how-title{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:16px;}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+@media(max-width:640px){.steps{grid-template-columns:repeat(2,1fr);}}
+.step{text-align:center;}
+.step-num{width:32px;height:32px;border-radius:50%;background:var(--gdim);border:1px solid rgba(0,200,83,.3);color:var(--green);font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;}
+.step-title{font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.step-desc{font-size:10px;color:var(--dim);line-height:1.5;}
+
+/* PLAID MODAL OVERLAY */
+.plaid-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:none;align-items:center;justify-content:center;}
+.plaid-modal{background:var(--s1);border:1px solid var(--border2);border-radius:12px;padding:32px;max-width:420px;width:100%;text-align:center;}
+.plaid-logo{font-size:28px;margin-bottom:16px;}
+.plaid-title{font-size:16px;font-weight:900;color:#fff;margin-bottom:8px;}
+.plaid-sub{font-size:12px;color:var(--dim);margin-bottom:24px;line-height:1.6;}
+.plaid-bank-list{text-align:left;margin-bottom:24px;}
+.plaid-bank{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--s3);border-radius:6px;margin-bottom:6px;cursor:pointer;transition:background .1s;}
+.plaid-bank:hover{background:var(--s2);}
+.plaid-bank-icon{font-size:20px;}
+.plaid-bank-name{font-size:12px;font-weight:600;color:var(--text);}
+.plaid-bank-type{font-size:10px;color:var(--dim);}
+.plaid-launch-btn{width:100%;background:var(--green);color:#000;border:none;border-radius:6px;padding:13px;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:10px;transition:all .15s;}
+.plaid-launch-btn:hover{background:var(--gbright);}
+.plaid-cancel{color:var(--dim);font-size:11px;cursor:pointer;background:none;border:none;}
+.plaid-cancel:hover{color:var(--text);}
+.plaid-success{display:none;text-align:center;}
+.plaid-success-icon{font-size:40px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tl-icon">FL</div>
+  <span class="tl-name">Foundation<span>Ledger</span></span>
+  <a class="back-btn" href="index.html">← Back to Dashboard</a>
+</div>
+
+<div class="page">
+  <div class="page-title">Connect Your Bank Accounts</div>
+  <div class="page-sub">Link your Altra Bank accounts to FoundationLedger. Transactions pull automatically — no more manual exports.</div>
+
+  <div class="security-bar">
+    <span class="security-icon">🔒</span>
+    <div class="security-text">
+      <strong>Bank-grade security.</strong> FoundationLedger never sees your bank username or password. Powered by Plaid — the same technology used by Venmo, Robinhood, and 12,000+ apps. Read-only access to transactions only.
+    </div>
+  </div>
+
+  <div class="how-it-works">
+    <div class="how-title">How It Works</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Click Connect</div>
+        <div class="step-desc">Select the entity you want to connect to Altra Bank</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Log In Securely</div>
+        <div class="step-desc">Plaid's secure window opens. Enter your bank credentials there — we never see them.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Authorize Read Access</div>
+        <div class="step-desc">Grant read-only transaction access. No payments, no transfers.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Done — Automatic</div>
+        <div class="step-desc">Transactions pull nightly. Friday reports run on fresh data. No more Monday exports.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="entities-grid" id="entities-grid"></div>
+</div>
+
+<!-- PLAID MODAL -->
+<div class="plaid-overlay" id="plaid-overlay">
+  <div class="plaid-modal">
+    <div id="plaid-content">
+      <div class="plaid-logo">🏦</div>
+      <div class="plaid-title" id="modal-title">Connect Altra Bank</div>
+      <div class="plaid-sub" id="modal-sub">Select your bank to continue. Your credentials go directly to Plaid's encrypted servers — FoundationLedger never sees them.</div>
+      <div class="plaid-bank-list">
+        <div class="plaid-bank" onclick="launchPlaid('altra')">
+          <span class="plaid-bank-icon">🏛️</span>
+          <div>
+            <div class="plaid-bank-name">Altra Bank</div>
+            <div class="plaid-bank-type">Commercial Banking · Primary bank for all ECH entities</div>
+          </div>
+        </div>
+        <div class="plaid-bank" onclick="launchPlaid('other')">
+          <span class="plaid-bank-icon">🔍</span>
+          <div>
+            <div class="plaid-bank-name">Search other banks</div>
+            <div class="plaid-bank-type">11,000+ supported institutions</div>
+          </div>
+        </div>
+      </div>
+      <button class="plaid-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+    <div class="plaid-success" id="plaid-success">
+      <div class="plaid-success-icon">✅</div>
+      <div class="plaid-title" style="color:var(--green)">Bank Connected!</div>
+      <div class="plaid-sub" id="success-sub">Transactions will pull tonight. Your Friday reports will include this account automatically.</div>
+      <button class="plaid-launch-btn" onclick="closeModal();markConnected()">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const entities = [
+  { code:"ECH_MGMT",   name:"ECH Management Services LLC",  type:"Management Co",    color:"#00c853", connected:false },
+  { code:"EADS_IND",   name:"EADS Industries LLC",          type:"Asset Holding",    color:"#82b1ff", connected:false },
+  { code:"ECH_DEV",    name:"ECH Developments & Holdings",  type:"Asset Holding",    color:"#f0b429", connected:false },
+  { code:"JP_EADS",    name:"JP Eads Company LLC",          type:"Construction",     color:"#e040fb", connected:false },
+  { code:"ES_CONC",    name:"E&S Concrete Construction",    type:"Construction",     color:"#4dd0e1", connected:false },
+  { code:"EADS_TOOLS", name:"EADS Tools & Equipment LLC",   type:"Equipment",        color:"#ff8a65", connected:false },
+];
+
+let currentEntity = null;
+
+function renderEntities() {
+  const grid = document.getElementById('entities-grid');
+  grid.innerHTML = entities.map(e => `
+    <div class="entity-card" id="card-${e.code}">
+      <div class="entity-header">
+        <div class="entity-dot" style="background:${e.color}"></div>
+        <div>
+          <div class="entity-name">${e.name}</div>
+          <div class="entity-type">${e.type}</div>
+        </div>
+      </div>
+      <div class="connect-status" id="status-${e.code}">
+        <div class="status-dot not-connected" id="dot-${e.code}"></div>
+        <span class="status-text not-connected" id="status-text-${e.code}">Not connected — manual CSV export required</span>
+      </div>
+      <button class="connect-btn active" id="btn-${e.code}" onclick="openModal('${e.code}')">
+        + Connect Altra Bank
+      </button>
+    </div>
+  `).join('');
+}
+
+function openModal(entityCode) {
+  currentEntity = entities.find(e => e.code === entityCode);
+  document.getElementById('modal-title').textContent = `Connect Bank — ${currentEntity.name}`;
+  document.getElementById('plaid-content').style.display = 'block';
+  document.getElementById('plaid-success').style.display = 'none';
+  document.getElementById('plaid-overlay').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('plaid-overlay').style.display = 'none';
+  currentEntity = null;
+}
+
+function launchPlaid(bankType) {
+  // In production: this calls your backend to get a link_token,
+  // then launches Plaid Link with that token.
+  // The backend endpoint: POST /api/plaid/link-token
+  //
+  // For demo: simulate the connection flow
+  document.getElementById('plaid-content').style.display = 'none';
+  document.getElementById('plaid-success').style.display = 'block';
+  document.getElementById('success-sub').textContent =
+    `${currentEntity?.name} is now connected to Altra Bank. ` +
+    `Transactions will pull tonight. Friday reports include this account automatically.`;
+}
+
+function markConnected() {
+  if (!currentEntity) return;
+  const entity = entities.find(e => e.code === currentEntity.code);
+  if (entity) entity.connected = true;
+
+  const dot = document.getElementById(`dot-${currentEntity.code}`);
+  const statusText = document.getElementById(`status-text-${currentEntity.code}`);
+  const btn = document.getElementById(`btn-${currentEntity.code}`);
+
+  dot.className = 'status-dot connected';
+  statusText.textContent = 'Connected · Transactions pulling nightly';
+  statusText.className = 'status-text connected';
+  btn.textContent = '✓ Connected';
+  btn.className = 'connect-btn connected';
+
+  currentEntity = null;
+}
+
+renderEntities();
+</script>
+</body>
+</html>
